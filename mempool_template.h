@@ -5,7 +5,8 @@
 template <class ELEM_TYPE> class MemoryPool
 {
 public:
-
+	// creates new memory pool
+	// @param count the number of ELEM_TYPE values this pool can hold (default is 200)
 	MemoryPool(std::size_t count = 200) : m_pElems(new ELEM_TYPE[count])
 	{
 		m_ElemPool.reserve(count);
@@ -20,7 +21,9 @@ public:
 		delete[] m_pElems;
 	}
 
-	ELEM_TYPE* alloc()
+	// @return borrowed memory item from pool or null if no more items available from pool
+	// caller must handle null value being returned
+	ELEM_TYPE* alloc() 
 	{
 		ELEM_TYPE *t = nullptr;
 		std::lock_guard<std::mutex> lock(m_pLock);
@@ -32,24 +35,18 @@ public:
 		return t;
 	}
 
+	// return item back to pool
 	void free(ELEM_TYPE* p)
 	{
 		std::lock_guard<std::mutex> lock(m_pLock);
-		m_ElemPool.push_back(p);
-		
+		m_ElemPool.push_back(p);		
 	}
 
-	std::size_t get_free_pool()
-	{
-		std::lock_guard<std::mutex> lock(m_pLock);
-		return m_ElemPool.size();
-	}
 private:
-
+	// pointers to each element in the memory pool
 	std::vector<ELEM_TYPE *> m_ElemPool;
-
+	// pointer to first element in the container
 	ELEM_TYPE *m_pElems;
-
+	// lock for thread safety
 	std::mutex m_pLock;
-	
 };
